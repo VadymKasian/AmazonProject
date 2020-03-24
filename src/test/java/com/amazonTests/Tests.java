@@ -1,9 +1,6 @@
 package com.amazonTests;
 
-import com.amazon.BookInformationPage;
-import com.amazon.FilteredSearchResults;
-import com.amazon.MainPage;
-import com.amazon.SearchResults;
+import com.amazon.*;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -16,7 +13,7 @@ import java.util.List;
 
 public class Tests {
     WebDriver driver;
-
+    Initialization initialization;
     MainPage mainPage;
     SearchResults searchResults;
     FilteredSearchResults filteredSearchResults;
@@ -33,12 +30,14 @@ public class Tests {
 
     @BeforeTest
     public void init(){
-        System.setProperty("webdriver.chrome.driver","D:/java/programs/chromedriver.exe");
-        driver = new ChromeDriver();
-        mainPage = new MainPage(driver);
-        searchResults = new SearchResults(driver);
-        filteredSearchResults = new FilteredSearchResults(driver);
-        bookInformationPage = new BookInformationPage(driver);
+        initialization = new Initialization();
+        initialization.init();
+
+        driver = initialization.getDriver();
+        mainPage = initialization.getMainPage();
+        searchResults = initialization.getSearchResults();
+        filteredSearchResults = initialization.getFilteredSearchResults();
+        bookInformationPage = initialization.getBookInformationPage();
     }
 
     /*
@@ -100,6 +99,6 @@ public class Tests {
 
     @AfterTest
     public void closeConnection(){
-        driver.close();
+        initialization.close();
     }
 }
