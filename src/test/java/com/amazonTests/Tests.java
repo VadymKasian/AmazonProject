@@ -1,25 +1,29 @@
 package com.amazonTests;
 
-import com.amazon.ChromeBrowser;
-import org.openqa.selenium.By;
+import com.amazon.BookInformationPage;
+import com.amazon.FilteredSearchResults;
+import com.amazon.MainPage;
+import com.amazon.SearchResults;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.testng.Assert;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Tests {
     WebDriver driver;
-    ChromeBrowser chromeBrowser;
+
+    MainPage mainPage;
+    SearchResults searchResults;
+    FilteredSearchResults filteredSearchResults;
+    BookInformationPage bookInformationPage;
 
     /*
-    @  0 - bestseller (true \ false)
+    @  0 - bestseller ("true" \ "false")
     @  1 - name
     @  2 - author
     */
@@ -31,7 +35,10 @@ public class Tests {
     public void init(){
         System.setProperty("webdriver.chrome.driver","D:/java/programs/chromedriver.exe");
         driver = new ChromeDriver();
-        chromeBrowser = new ChromeBrowser(driver);
+        mainPage = new MainPage(driver);
+        searchResults = new SearchResults(driver);
+        filteredSearchResults = new FilteredSearchResults(driver);
+        bookInformationPage = new BookInformationPage(driver);
     }
 
     /*
@@ -44,39 +51,24 @@ public class Tests {
     public void bookCollection() throws InterruptedException {
         driver.get("https://www.amazon.com");
 
-        WebElement searchBox = chromeBrowser.getSearchBox();
-
+        mainPage.getSearchBox().sendKeys("Java");
         Thread.sleep(300);
-        searchBox.sendKeys("Java");
-        searchBox.sendKeys(Keys.ENTER);
+        mainPage.getSearchBox().sendKeys(Keys.ENTER);
 
-        driver.findElement(By
-                .xpath("//span[contains(@class,'a-size-base a-color-base') and contains(text(),'Books')]"))
-                .click();
+        searchResults.getBooksFilter().click();
 
         Thread.sleep(600);
-        List<WebElement> searchResults = driver.findElements(By.cssSelector("div[class='a-section a-spacing-medium']"));
 
-        searchResults.forEach(element -> {
+        filteredSearchResults.getSearchResult().forEach(element -> {
             bookInformation = new ArrayList<String>();
             // check bestseller
-            if(element.findElements(By.xpath(".//div[@class='sg-row']/div/a[@class='a-link-normal']")).size() > 0) {
-                bookInformation.add("true");
-            } else {
-                bookInformation.add("false");
-            }
+            bookInformation.add(String.valueOf(filteredSearchResults.isBestseller(element)));
 
             // name
-            bookInformation.add(element.findElement(By
-                    .xpath(".//h2/a/span"))
-                    .getText());
+            bookInformation.add(filteredSearchResults.getBookName(element));
 
             // author(s)
-            String author = element.findElement(By.xpath(".//div[@class='a-section a-spacing-none']/div[@class='a-row a-size-base a-color-secondary']")).getText();
-            if(author.contains("|")){
-                author = author.substring(0, author.indexOf("|")-1);
-            }
-            bookInformation.add(author.substring(3, author.length()));
+            bookInformation.add(filteredSearchResults.getBookAuthor(element));
 
             library.add(bookInformation);
         });
@@ -86,13 +78,13 @@ public class Tests {
             System.out.println(book.toString());
         }
 
-
-        driver.close();
     }
 
     @Test
     public void checkBookContans(){
-        String name = "Head First Java, 2nd Edition";
+        driver.get("https://www.amazon.com/Head-First-Java-Kathy-Sierra/dp/0596009208/ref=sr_1_3");
+
+        String name = bookInformationPage.getBookName();
         boolean contains = false;
 
         for (List<String> list: library) {
@@ -104,5 +96,10 @@ public class Tests {
 
         System.out.println();
         System.out.println("Book - " + name + "\n. Contains: " +contains);
+    }
+
+    @AfterTest
+    public void closeConnection(){
+        driver.close();
     }
 }
